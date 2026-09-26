@@ -127,6 +127,10 @@ details>summary{cursor:pointer;color:var(--link);font-size:.88rem;margin:6px 0}
 .it-flags span{display:inline-block;font-size:.76rem;border:1px solid var(--line);border-radius:4px;padding:0 6px;margin:2px 4px 2px 0}
 .it-flags span.no{color:var(--muted);text-decoration:line-through}
 .it-empty{color:var(--muted);font-size:.9rem}
+.nojp{color:#b3261e}
+.jpmark{font-size:.78rem;border-radius:4px;padding:2px 8px;display:inline-block;margin:4px 0}
+.jpmark.ok{background:#e8f5ee;color:#1e7d4f}
+.jpmark.no{background:#fdecea;color:#b3261e}
 </style></head><body>
 <div class='top'><span class='name'>リネージュ2 情報収集レポート</span><span class='unofficial'>非公式</span><nav class='pnav'><a href='./'>ガチャ・イベント</a><a href='kr_updates.html'>韓国の先行アップデート</a><a href='kr_events.html'>韓国→日本の予測</a><a href='items.html' class=on>アイテム検索</a></nav></div>
 <div class='sub'><div class='row1'><b>アイテム検索（韓国公式のアイテム辞典を日本語で）</b><span>3,755件</span></div></div>
@@ -135,7 +139,9 @@ details>summary{cursor:pointer;color:var(--link);font-size:.88rem;margin:6px 0}
 強化段階（+0、+1…）ごとの能力も見られます。日本語・韓国語のどちらでも、名前の一部で探せます。</p>
 <details class='guide'><summary>注意</summary><ul>
 <li><strong>韓国（本サーバー）の現在のデータ</strong>です。日本では未実装のアイテムや、数値が違うものがあり得ます。</li>
-<li>名前と説明は機械翻訳です。日本版の正式名と違うことがあります（照合で確かめた名前は日本版の表記にしています）。正確な内容は各アイテムの「韓国公式」で確かめてください。</li>
+<li><strong>日本の公式アイテム検索に同じアイテム（同じID）があるものは、名前と説明を日本の正式なもの</strong>にしています。
+強化段階ごとの効果は日本の公式データに無いため、韓国のデータの機械翻訳です。</li>
+<li>日本の公式データに無いアイテム（「日本データなし」）は、日本では未実装の可能性があり、名前・説明とも機械翻訳です。正確な内容は各アイテムの「韓国公式」で確かめてください。</li>
 <li>NCSOFT・エヌ・シー・ジャパン各社とは関係のない非公式のページです。</li>
 </ul></details>
 <div class='it-bar'>
@@ -170,12 +176,13 @@ Lineage II は NC Corporation の登録商標です。</footer>
     shown = items.filter(function(x){
       if (g && x[3] !== g) return false;
       if (t && x[4].split('・').indexOf(t) < 0) return false;
-      return !k || x.nj.indexOf(k) >= 0 || x.nk.indexOf(k) >= 0;
+      return !k || x.nj.indexOf(k) >= 0 || x.nk.indexOf(k) >= 0 || x.na.indexOf(k) >= 0;
     });
     count.textContent = shown.length.toLocaleString() + '件' + (shown.length > 200 ? '（先頭の200件を表示。名前をもう少し入れて絞り込んでください）' : '');
     list.innerHTML = shown.slice(0, 200).map(function(x, i){
       return "<div class='it-row' data-i='" + i + "'>" + icon(x[5]) + "<span class='nm'>" + esc(x[1]) +
-             "<span class='ko'>" + esc(x[2]) + "</span></span><span class='gr'>" + esc(x[3]) + "<br>" + esc(x[4]) + "</span></div>";
+             "<span class='ko'>" + esc(x[2]) + "</span></span><span class='gr'>" + esc(x[3]) + "<br>" + esc(x[4]) +
+             (x[6] ? "" : "<br><span class='nojp'>日本データなし</span>") + "</span></div>";
     }).join('') || "<p class='it-empty' style='padding:10px'>見つかりませんでした。</p>";
   }
   function lines(arr){ return "<pre class='it-lines'>" + esc((arr || []).join('\n').replace(/\n{3,}/g, '\n\n').trim()) + "</pre>"; }
@@ -192,6 +199,8 @@ Lineage II は NC Corporation の登録商標です。</footer>
     fetch('items/d/' + id + '.json').then(function(r){ return r.json(); }).then(function(d){
       cur = d;
       var h = "<h2>" + icon(d.icon) + "<span>" + esc(d.ja) + "<br><span class='ko'>" + esc(d.ko) + "</span></span></h2>";
+      h += d.jp ? "<div class='jpmark ok'>日本の正式名（日本の公式アイテム検索と同じアイテム）</div>"
+                : "<div class='jpmark no'>日本の公式アイテム検索に無いアイテム（日本では未実装の可能性）。名前は機械翻訳です</div>";
       h += "<div class='meta'>" + esc(d.grade) + (d.types.length ? "・" + esc(d.types.join('・')) : '') +
            (d.weight ? "・重さ " + esc(d.weight) : '') + "・<a href='" + esc(d.url) + "' target='_blank' rel='noopener'>韓国公式</a></div>";
       if (d.options.length) h += "<h3>基本能力</h3><table class='it-opt'>" + d.options.map(function(o){ return "<tr><td>" + esc(o[0]) + "</td><td>" + esc(o[1]) + "</td></tr>"; }).join('') + "</table>";
@@ -211,7 +220,7 @@ Lineage II は NC Corporation の登録商標です。</footer>
   }
   function more(d){
     var h = "";
-    if (d.desc.join('').trim()) h += "<h3>説明</h3>" + lines(d.desc);
+    if (d.desc.join('').trim()) h += "<h3>説明（" + esc(d.desc_src || '') + "）</h3>" + lines(d.desc);
     var f = Object.keys(d.flags || {});
     if (f.length) h += "<h3>取り扱い</h3><div class='it-flags'>" + f.map(function(k){ return "<span class='" + (d.flags[k] ? '' : 'no') + "'>" + esc(k) + (d.flags[k] ? '可' : '不可') + "</span>"; }).join('') + "</div>";
     if (d.keep) h += "<p class='it-empty'>" + esc(d.keep) + "</p>";
@@ -225,7 +234,7 @@ Lineage II は NC Corporation の登録商標です。</footer>
   q.addEventListener('input', function(){ clearTimeout(timer); timer = setTimeout(search, 150); });
   gSel.onchange = search; tSel.onchange = search;
   fetch('items/index.json').then(function(r){ return r.json(); }).then(function(data){
-    items = data.map(function(x){ x.nj = norm(x[1]); x.nk = norm(x[2]); return x; });
+    items = data.map(function(x){ x.nj = norm(x[1]); x.nk = norm(x[2]); x.na = norm(x[7] || ''); return x; });
     var gs = {}, ts = {};
     items.forEach(function(x){ gs[x[3]] = 1; x[4].split('・').forEach(function(t){ if (t) ts[t] = 1; }); });
     fillSelect(gSel, Object.keys(gs).sort()); fillSelect(tSel, Object.keys(ts).sort());
